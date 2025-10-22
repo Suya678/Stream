@@ -3,7 +3,7 @@ import dotenv from "dotenv";
 import bcrypt from "bcrypt";
 import crypto from "crypto";
 import * as userDb from "../db/users.db";
-import { sendEmail, SendEmailResult } from "../email/sendEmail";
+import { sendVerificationEmail } from "../email/sendEmail";
 import { generateAuthToken } from "../utils/jwt";
 dotenv.config();
 
@@ -30,7 +30,7 @@ export async function signUp(req: Request, res: Response) {
   try {
     // Check if email already exists
     const existingEmailUser = await userDb.getUserByEmail(email);
-    if (existingEmailUser === null) {
+    if (existingEmailUser != null) {
       return res
         .status(409)
         .json({ message: "User with this email already exists" });
@@ -38,7 +38,7 @@ export async function signUp(req: Request, res: Response) {
 
     // Check if username already exists
     const existingUsernameUser = await userDb.getUserByUserName(userName);
-    if (existingUsernameUser === null) {
+    if (existingUsernameUser != null) {
       return res
         .status(409)
         .json({ message: "User with this username already exists" });
@@ -63,7 +63,7 @@ export async function signUp(req: Request, res: Response) {
       expiry,
       false,
     );
-
+    sendVerificationEmail(user.username, token, expiry, user.email);
     // Generate auth token
     generateAuthToken(userName, email, res);
 
